@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prof. Dr. Ayam S.Kom M.Kom</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 2rem 1rem; }
+  .app { width: 100%; max-width: 480px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .header { text-align: center; margin-bottom: 2rem; }
+  .header-icon { font-size: 36px; margin-bottom: 8px; }
+  .title { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+  .subtitle { font-size: 14px; color: #888; margin-top: 4px; }
+  .card { background: #fff; border: 1px solid #e8e8e5; border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; }
+  .question-text { font-size: 16px; color: #1a1a1a; line-height: 1.7; margin-bottom: 1.25rem; }
+  .intro-text { font-size: 15px; color: #444; line-height: 1.7; margin-bottom: 1.25rem; }
+  .btn-row { display: flex; gap: 10px; }
+  .btn { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid #ddd; background: #fff; font-size: 15px; cursor: pointer; transition: background 0.15s; font-family: inherit; }
+  .btn-start { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .btn-start:hover { background: #333; }
+  .btn-yes { border-color: #1D9E75; color: #0F6E56; }
+  .btn-yes:hover { background: #f0faf6; }
+  .btn-no { border-color: #D85A30; color: #993C1D; }
+  .btn-no:hover { background: #fdf3ef; }
+  .btn-restart { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; background: transparent; color: #888; font-size: 14px; cursor: pointer; margin-top: 0.5rem; font-family: inherit; }
+  .btn-restart:hover { background: #f5f5f3; }
+  .progress-bar { display: flex; gap: 4px; margin-bottom: 1.25rem; }
+  .progress-dot { height: 3px; flex: 1; border-radius: 2px; background: #e8e8e5; }
+  .progress-dot.done { background: #1D9E75; }
+  .result-tag { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 8px; margin-bottom: 12px; font-weight: 500; }
+  .tag-sick { background: #FAECE7; color: #993C1D; }
+  .tag-healthy { background: #EAF3DE; color: #3B6D11; }
+  .result-name { font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; margin-top: 16px; }
+  .section-text { font-size: 14px; color: #333; line-height: 1.7; }
+  .chart-area { margin-top: 1.5rem; border-top: 1px solid #f0f0ee; padding-top: 1.25rem; }
+  .chart-title { font-size: 12px; color: #aaa; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .bar-label { font-size: 12px; color: #888; width: 110px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 7px; background: #f0f0ee; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .bar-val { font-size: 12px; color: #888; width: 32px; text-align: right; }
+  .hint { font-size: 12px; color: #bbb; text-align: center; margin-top: 0.5rem; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="screen-start" class="screen active">
+    <div class="header" style="padding-top:1rem;">
+      <div class="header-icon">🐓</div>
+      <div class="title">Prof. Dr. Ayam S.Kom M.Kom</div>
+      <div class="subtitle">Sistem Diagnosis Penyakit Unggas</div>
+    </div>
+    <div class="card">
+      <div class="intro-text">Selamat datang. Sistem ini akan membantu mendiagnosis kemungkinan penyakit pada ayam Anda melalui serangkaian pertanyaan singkat.</div>
+      <button class="btn btn-start" onclick="startDiagnosis()">Mulai Diagnosis</button>
+    </div>
+  </div>
+
+  <div id="screen-q" class="screen">
+    <div class="header">
+      <div class="title">Prof. Dr. Ayam S.Kom M.Kom</div>
+    </div>
+    <div id="progress-dots" class="progress-bar"></div>
+    <div class="card">
+      <div id="q-text" class="question-text"></div>
+      <div class="btn-row">
+        <button class="btn btn-yes" onclick="answer(true)">Ya</button>
+        <button class="btn btn-no" onclick="answer(false)">Tidak</button>
+      </div>
+    </div>
+    <div class="hint">Jawab berdasarkan gejala yang terlihat pada ayam</div>
+  </div>
+
+  <div id="screen-result" class="screen">
+    <div class="header">
+      <div class="title">Hasil Diagnosis</div>
+    </div>
+    <div id="result-content"></div>
+    <button class="btn-restart" onclick="restart()">↺ Mulai ulang diagnosis</button>
+  </div>
+
+</div>
+<script>
+// ── ALUR PERTANYAAN (sesuai flowchart) ──────────────────────────────────────
+// Q1: Apakah ayam sakit?
+//   Tidak → SEHAT
+//   Ya    → Q2
+// Q2: Ada gangguan pernapasan?
+//   Ya    → Q3
+//   Tidak → Q4
+// Q3: Ada gejala saraf (leher berputar)?
+//   Ya    → Newcastle Disease
+//   Tidak → CRD
+// Q4: Kematian mendadak massal 24-48 jam?
+//   Ya    → Avian Influenza
+//   Tidak → Q5
+// Q5: Diare berdarah / kotoran kehijauan?
+//   Ya    → Kolera Unggas
+//   Tidak → Q6
+// Q6: Kelumpuhan kaki / sayap?
+//   Ya    → Marek's Disease
+//   Tidak → Gumboro (IBD)
+// ────────────────────────────────────────────────────────────────────────────
+
+const QUESTIONS = {
+  q1: "Apakah ayam menunjukkan tanda-tanda sakit? (lemas, tidak mau makan, perubahan perilaku)",
+  q2: "Apakah ayam menunjukkan gangguan pernapasan? (ngorok, sesak napas, lendir hidung)",
+  q3: "Apakah ada gejala saraf seperti leher berputar atau kepala geleng-geleng?",
+  q4: "Apakah terjadi kematian massal mendadak dalam 24–48 jam?",
+  q5: "Apakah ada diare berdarah atau kotoran berwarna kehijauan?",
+  q6: "Apakah ada kelumpuhan pada kaki atau sayap?"
+};
+
+// total pertanyaan maksimal = 6 (untuk progress bar)
+const TOTAL = 6;
+
+const DISEASES = {
+  healthy: {
+    name: "Ayam Sehat", tag: "Sehat", tagClass: "tag-healthy",
+    gejala: "Tidak ada gejala yang terdeteksi. Ayam menunjukkan kondisi normal.",
+    pengobatan: "Tidak diperlukan pengobatan. Pertahankan pola makan bergizi, kebersihan kandang, dan air minum bersih.",
+    pencegahan: "Vaksinasi rutin, biosekuriti kandang, dan pemeriksaan berkala oleh dokter hewan.",
+    catatan: "Tetap pantau kondisi ayam setiap hari untuk deteksi dini.",
+    chart: [
+      { label: "Risiko penyakit", val: 5,  color: "#5DCAA5" },
+      { label: "Nafsu makan",     val: 95, color: "#97C459" },
+      { label: "Aktivitas",       val: 90, color: "#97C459" }
+    ]
+  },
+  nd: {
+    name: "Newcastle Disease (ND / Tetelo)", tag: "Terdeteksi", tagClass: "tag-sick",
+    gejala: "Ngorok, sesak napas, leher berputar (torticollis), lumpuh, diare kehijauan, produksi telur turun drastis.",
+    pengobatan: "Tidak ada obat spesifik untuk virus ND. Berikan vitamin C + elektrolit. Antibiotik (Amoksisilin/Enrofloksasin) untuk mencegah infeksi sekunder.",
+    pencegahan: "Vaksin La Sota (tetes mata/air minum) umur 4 hari & 21 hari, booster tiap 2–3 bulan. Desinfeksi kandang dengan formalin 2%.",
+    catatan: "Sangat menular. Segera isolasi ayam sakit dari kawanan sehat.",
+    chart: [
+      { label: "Tingkat menular", val: 95, color: "#E24B4A" },
+      { label: "Fatalitas",       val: 80, color: "#F09595" },
+      { label: "Respons obat",    val: 30, color: "#FAC775" }
+    ]
+  },
+  crd: {
+    name: "CRD (Chronic Respiratory Disease)", tag: "Terdeteksi", tagClass: "tag-sick",
+    gejala: "Ngorok, lendir hidung, batuk, mata berair, pertumbuhan lambat, produksi telur turun.",
+    pengobatan: "Tylosin, Doxycycline, atau Enrofloksasin sesuai dosis selama 5–7 hari penuh meski gejala sudah hilang.",
+    pencegahan: "Jaga ventilasi kandang, hindari kepadatan berlebih, kurangi debu & amonia. Vaksinasi MG jika tersedia.",
+    catatan: "Disebabkan Mycoplasma gallisepticum, sering kambuh jika kondisi kandang buruk.",
+    chart: [
+      { label: "Tingkat menular", val: 60, color: "#EF9F27" },
+      { label: "Fatalitas",       val: 40, color: "#FAC775" },
+      { label: "Respons obat",    val: 75, color: "#5DCAA5" }
+    ]
+  },
+  ai: {
+    name: "Avian Influenza (Flu Burung / AI)", tag: "Terdeteksi", tagClass: "tag-sick",
+    gejala: "Kematian massal mendadak dalam 24–48 jam, jengger & pial membiru (sianosis), produksi telur berhenti total.",
+    pengobatan: "Tidak ada pengobatan. Depopulasi (pemusnahan) wajib oleh pemerintah. Kompensasi diberikan sesuai regulasi.",
+    pencegahan: "Vaksinasi AI H5N1 rutin, biosekuriti ketat, jaring anti-burung liar, desinfeksi kendaraan & peralatan.",
+    catatan: "Dapat menular ke manusia. Lapor Dinas Peternakan segera: 1500-533.",
+    chart: [
+      { label: "Tingkat menular", val: 98, color: "#E24B4A" },
+      { label: "Fatalitas",       val: 95, color: "#E24B4A" },
+      { label: "Respons obat",    val: 5,  color: "#F7C1C1" }
+    ]
+  },
+  kolera: {
+    name: "Kolera Unggas", tag: "Terdeteksi", tagClass: "tag-sick",
+    gejala: "Diare hijau atau berdarah, muka membiru, lemas mendadak, nafsu makan hilang, bisa mati cepat.",
+    pengobatan: "Sulfonamid atau Enrofloksasin sesuai dosis. Isolasi ayam sakit segera. Konsultasi dokter hewan untuk dosis tepat.",
+    pencegahan: "Vaksinasi kolera, jaga sanitasi air minum & pakan, hindari kontak dengan unggas liar.",
+    catatan: "Disebabkan bakteri Pasteurella multocida. Bisa menyerang berbagai jenis unggas.",
+    chart: [
+      { label: "Tingkat menular", val: 75, color: "#E24B4A" },
+      { label: "Fatalitas",       val: 65, color: "#F09595" },
+      { label: "Respons obat",    val: 70, color: "#5DCAA5" }
+    ]
+  },
+  marek: {
+    name: "Marek's Disease", tag: "Terdeteksi", tagClass: "tag-sick",
+    gejala: "Kelumpuhan kaki atau sayap (satu sisi), pupil tidak simetris, tumor pada organ dalam, bulu kusam.",
+    pengobatan: "Tidak ada obat. Ayam sakit di-culling (dipisah & dimusnahkan) untuk mencegah penularan ke kawanan sehat.",
+    pencegahan: "Vaksin HVT diberikan saat DOC (Day Old Chick) sebelum masuk kandang. Jaga kebersihan, hindari stres.",
+    catatan: "Penularan lewat debu bulu, sangat menular di kandang padat.",
+    chart: [
+      { label: "Tingkat menular", val: 85, color: "#E24B4A" },
+      { label: "Fatalitas",       val: 70, color: "#F09595" },
+      { label: "Respons obat",    val: 10, color: "#F7C1C1" }
+    ]
+  },
+  gumboro: {
+    name: "Gumboro (IBD)", tag: "Terdeteksi", tagClass: "tag-sick",
+    gejala: "Diare putih, gemetar, lemas, nafsu makan turun. Ayam muda lebih rentan (umur 3–6 minggu).",
+    pengobatan: "Tidak ada obat spesifik. Berikan vitamin C & E, elektrolit, dan perawatan suportif. Jaga kebersihan pakan & minum.",
+    pencegahan: "Vaksinasi Gumboro umur 10–14 hari dan 24–28 hari. Biosekuriti kandang ketat.",
+    catatan: "Virus sangat tahan di lingkungan. Kandang harus didesinfeksi secara menyeluruh.",
+    chart: [
+      { label: "Tingkat menular", val: 80, color: "#E24B4A" },
+      { label: "Fatalitas",       val: 50, color: "#FAC775" },
+      { label: "Respons obat",    val: 40, color: "#FAC775" }
+    ]
+  }
+};
+
+// state
+let currentQ = null;
+let stepCount = 0;
+
+function startDiagnosis() {
+  stepCount = 0;
+  goTo('q1');
+}
+
+function goTo(qKey) {
+  currentQ = qKey;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-q').classList.add('active');
+  document.getElementById('q-text').textContent = QUESTIONS[qKey];
+  updateProgress();
+}
+
+function updateProgress() {
+  const dots = document.getElementById('progress-dots');
+  dots.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'progress-dot' + (i < stepCount ? ' done' : '');
+    dots.appendChild(d);
+  }
+}
+
+function answer(val) {
+  stepCount++;
+
+  // Flowchart logic — strictly follows the tree
+  if (currentQ === 'q1') {
+    if (!val) { showResult(DISEASES.healthy); return; }
+    goTo('q2'); return;
+  }
+  if (currentQ === 'q2') {
+    if (val)  { goTo('q3'); return; }
+    goTo('q4'); return;
+  }
+  if (currentQ === 'q3') {
+    showResult(val ? DISEASES.nd : DISEASES.crd); return;
+  }
+  if (currentQ === 'q4') {
+    if (val)  { showResult(DISEASES.ai); return; }
+    goTo('q5'); return;
+  }
+  if (currentQ === 'q5') {
+    if (val)  { showResult(DISEASES.kolera); return; }
+    goTo('q6'); return;
+  }
+  if (currentQ === 'q6') {
+    showResult(val ? DISEASES.marek : DISEASES.gumboro); return;
+  }
+}
+
+function showResult(d) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-result').classList.add('active');
+  const bars = d.chart.map(b => `
+    <div class="bar-row">
+      <div class="bar-label">${b.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${b.val}%;background:${b.color};"></div></div>
+      <div class="bar-val">${b.val}%</div>
+    </div>`).join('');
+  document.getElementById('result-content').innerHTML = `
+    <div class="card">
+      <span class="result-tag ${d.tagClass}">${d.tag}</span>
+      <div class="result-name">${d.name}</div>
+      <div class="section-label">Gejala utama</div>
+      <div class="section-text">${d.gejala}</div>
+      <div class="section-label">Pengobatan</div>
+      <div class="section-text">${d.pengobatan}</div>
+      <div class="section-label">Pencegahan</div>
+      <div class="section-text">${d.pencegahan}</div>
+      <div class="section-label">Catatan</div>
+      <div class="section-text">${d.catatan}</div>
+      <div class="chart-area">
+        <div class="chart-title">Indikator penyakit</div>
+        ${bars}
+      </div>
+    </div>`;
+}
+
+function restart() {
+  stepCount = 0;
+  currentQ = null;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-start').classList.add('active');
+}
+</script>
+</body>
+</html>
